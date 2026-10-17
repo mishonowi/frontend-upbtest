@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import {
-  API_URL,
   actualizarProducto,
   crearProducto,
   eliminarProducto,
@@ -18,6 +17,24 @@ type Form = { nombre: string; precio: string; stock: string };
 const FORM_VACIO: Form = { nombre: "", precio: "", stock: "" };
 
 const formatoPrecio = new Intl.NumberFormat("es-BO", { style: "currency", currency: "BOB" });
+
+// Ranita dibujada a mano: cabeza verde, ojos saltones y mejillas rojas
+function Ranita({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 64 52" className={className} aria-hidden="true">
+      <circle cx="18" cy="16" r="12" fill="#5cb85c" />
+      <circle cx="46" cy="16" r="12" fill="#5cb85c" />
+      <ellipse cx="32" cy="32" rx="28" ry="19" fill="#5cb85c" />
+      <circle cx="18" cy="16" r="8" fill="#fff" />
+      <circle cx="46" cy="16" r="8" fill="#fff" />
+      <circle cx="19" cy="17" r="3.5" fill="#2f4a22" />
+      <circle cx="45" cy="17" r="3.5" fill="#2f4a22" />
+      <ellipse cx="14" cy="36" rx="4.5" ry="2.5" fill="#e8505b" opacity="0.85" />
+      <ellipse cx="50" cy="36" rx="4.5" ry="2.5" fill="#e8505b" opacity="0.85" />
+      <path d="M24 37 Q32 44 40 37" stroke="#2f4a22" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+    </svg>
+  );
+}
 
 export default function ProductosPanel() {
   const [productos, setProductos] = useState<Producto[]>([]);
@@ -128,220 +145,164 @@ export default function ProductosPanel() {
     p.nombre.toLowerCase().includes(filtro.trim().toLowerCase())
   );
 
+  const card = "rounded-3xl bg-white p-5 shadow-[0_4px_0_#cfe8c0]";
   const input =
-    "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 dark:border-zinc-700 dark:bg-zinc-900 dark:focus:ring-indigo-900";
-  const boton =
-    "rounded-lg px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50";
+    "w-full min-w-0 rounded-full border-2 border-rana-claro bg-white px-4 py-2 text-sm outline-none transition placeholder:text-rana/60 focus:border-rana";
+  const botonVerde =
+    "rounded-full bg-rana px-5 py-2 text-sm font-medium text-white transition hover:bg-rana-oscuro disabled:opacity-50";
+  const botonSuave =
+    "rounded-full bg-rana-claro px-4 py-2 text-sm font-medium text-rana-oscuro transition hover:bg-[#cdeabd]";
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-8">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Productos</h1>
-          <p className="text-sm text-zinc-500">
-            Backend: <span className="font-mono">{API_URL}</span>
-          </p>
-        </div>
-        <div
-          className={`inline-flex items-center gap-2 self-start rounded-full px-3 py-1 text-xs font-medium ${
-            status
-              ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
-              : statusError
-                ? "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300"
-                : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
-          }`}
-          title={status?.timestamp}
-        >
+    <div className="mx-auto flex w-full max-w-xl flex-col gap-5 px-4 py-10">
+      <header className="flex flex-col items-center gap-2 text-center">
+        <Ranita className="h-16 w-20" />
+        <h1 className="text-3xl font-semibold text-rana-oscuro">Productos</h1>
+        <span className="inline-flex items-center gap-2 text-xs text-foreground/70" title={status?.timestamp}>
           <span
             className={`h-2 w-2 rounded-full ${
-              status ? "bg-emerald-500" : statusError ? "bg-red-500" : "animate-pulse bg-zinc-400"
+              status ? "bg-rana" : statusError ? "bg-mejilla" : "animate-pulse bg-rana-claro"
             }`}
           />
-          {status ? status.mensaje : statusError ? "Backend sin respuesta" : "Conectando con el backend…"}
-        </div>
+          {status ? "Backend conectado" : statusError ? "Backend sin respuesta" : "Despertando al backend…"}
+        </span>
       </header>
 
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
-          {error}
-        </div>
+        <p className="rounded-full bg-[#fde6e7] px-4 py-2 text-center text-sm text-mejilla">{error}</p>
       )}
       {mensaje && (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950 dark:text-emerald-300">
-          {mensaje}
-        </div>
+        <p className="rounded-full bg-rana-claro px-4 py-2 text-center text-sm text-rana-oscuro">{mensaje}</p>
       )}
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <form
-          onSubmit={enviar}
-          className="flex flex-col gap-3 rounded-xl border border-zinc-200 p-5 dark:border-zinc-800"
-        >
-          <h2 className="font-semibold">{editandoId ? `Editar producto #${editandoId}` : "Nuevo producto"}</h2>
-          <label className="flex flex-col gap-1 text-sm">
-            Nombre
-            <input
-              className={input}
-              value={form.nombre}
-              onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-              maxLength={100}
-              required
-            />
-          </label>
-          <div className="grid grid-cols-2 gap-3">
-            <label className="flex flex-col gap-1 text-sm">
-              Precio
-              <input
-                className={input}
-                type="number"
-                min="0"
-                step="0.01"
-                value={form.precio}
-                onChange={(e) => setForm({ ...form, precio: e.target.value })}
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-sm">
-              Stock
-              <input
-                className={input}
-                type="number"
-                min="0"
-                step="1"
-                value={form.stock}
-                onChange={(e) => setForm({ ...form, stock: e.target.value })}
-              />
-            </label>
-          </div>
-          <div className="flex gap-2">
-            <button
-              type="submit"
-              disabled={guardando}
-              className={`${boton} bg-indigo-600 text-white hover:bg-indigo-700`}
-            >
-              {guardando ? "Guardando…" : editandoId ? "Guardar cambios" : "Crear producto"}
+      <form onSubmit={enviar} className={`${card} flex flex-col gap-3`}>
+        <h2 className="font-medium">{editandoId ? `Editar #${editandoId}` : "Nuevo producto"}</h2>
+        <input
+          className={input}
+          placeholder="Nombre"
+          aria-label="Nombre"
+          value={form.nombre}
+          onChange={(e) => setForm({ ...form, nombre: e.target.value })}
+          maxLength={100}
+          required
+        />
+        <div className="grid grid-cols-2 gap-3">
+          <input
+            className={input}
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="Precio"
+            aria-label="Precio"
+            value={form.precio}
+            onChange={(e) => setForm({ ...form, precio: e.target.value })}
+          />
+          <input
+            className={input}
+            type="number"
+            min="0"
+            step="1"
+            placeholder="Stock"
+            aria-label="Stock"
+            value={form.stock}
+            onChange={(e) => setForm({ ...form, stock: e.target.value })}
+          />
+        </div>
+        <div className="flex gap-2">
+          <button type="submit" disabled={guardando} className={botonVerde}>
+            {guardando ? "Guardando…" : editandoId ? "Guardar" : "Agregar"}
+          </button>
+          {editandoId && (
+            <button type="button" onClick={cancelar} className={botonSuave}>
+              Cancelar
             </button>
-            {editandoId && (
-              <button
-                type="button"
-                onClick={cancelar}
-                className={`${boton} border border-zinc-300 hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800`}
-              >
-                Cancelar
-              </button>
-            )}
-          </div>
-        </form>
-
-        <form
-          onSubmit={buscarPorId}
-          className="flex flex-col gap-3 rounded-xl border border-zinc-200 p-5 dark:border-zinc-800"
-        >
-          <h2 className="font-semibold">Buscar por id</h2>
-          <div className="flex gap-2">
-            <input
-              className={input}
-              type="number"
-              min="1"
-              step="1"
-              placeholder="Ej. 1"
-              value={buscarId}
-              onChange={(e) => setBuscarId(e.target.value)}
-              required
-            />
-            <button type="submit" className={`${boton} bg-zinc-900 text-white hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900`}>
-              Buscar
-            </button>
-          </div>
-          {encontrado && (
-            <dl className="grid grid-cols-2 gap-x-4 gap-y-1 rounded-lg bg-zinc-50 p-3 text-sm dark:bg-zinc-900">
-              <dt className="text-zinc-500">Id</dt>
-              <dd>{encontrado.id}</dd>
-              <dt className="text-zinc-500">Nombre</dt>
-              <dd>{encontrado.nombre}</dd>
-              <dt className="text-zinc-500">Precio</dt>
-              <dd>{formatoPrecio.format(encontrado.precio)}</dd>
-              <dt className="text-zinc-500">Stock</dt>
-              <dd>{encontrado.stock}</dd>
-            </dl>
           )}
-        </form>
-      </div>
+        </div>
+      </form>
 
-      <section className="flex flex-col gap-3">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="font-semibold">
-            Listado <span className="text-zinc-500">({visibles.length})</span>
-          </h2>
-          <div className="flex gap-2">
-            <input
-              className={`${input} sm:w-64`}
-              placeholder="Filtrar por nombre"
-              value={filtro}
-              onChange={(e) => setFiltro(e.target.value)}
-            />
-            <button
-              onClick={cargar}
-              className={`${boton} border border-zinc-300 hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800`}
-            >
-              Recargar
-            </button>
-          </div>
+      <section className={`${card} flex flex-col gap-4`}>
+        <div className="flex gap-2">
+          <input
+            className={input}
+            placeholder="Filtrar por nombre"
+            aria-label="Filtrar por nombre"
+            value={filtro}
+            onChange={(e) => setFiltro(e.target.value)}
+          />
+          <button onClick={cargar} className={botonSuave} title="Recargar">
+            ↻
+          </button>
         </div>
 
-        <div className="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-800">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-zinc-50 text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400">
-              <tr>
-                <th className="px-4 py-3 font-medium">Id</th>
-                <th className="px-4 py-3 font-medium">Nombre</th>
-                <th className="px-4 py-3 text-right font-medium">Precio</th>
-                <th className="px-4 py-3 text-right font-medium">Stock</th>
-                <th className="px-4 py-3 text-right font-medium">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-              {cargando ? (
-                <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-zinc-500">
-                    Cargando productos… (el backend gratuito de Render puede tardar ~1 min en despertar)
-                  </td>
-                </tr>
-              ) : visibles.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-zinc-500">
-                    {productos.length === 0 ? "No hay productos. Crea el primero." : "Ningún producto coincide con el filtro."}
-                  </td>
-                </tr>
-              ) : (
-                visibles.map((p) => (
-                  <tr key={p.id} className={editandoId === p.id ? "bg-indigo-50 dark:bg-indigo-950/40" : ""}>
-                    <td className="px-4 py-3 font-mono text-zinc-500">{p.id}</td>
-                    <td className="px-4 py-3">{p.nombre}</td>
-                    <td className="px-4 py-3 text-right tabular-nums">{formatoPrecio.format(p.precio)}</td>
-                    <td className="px-4 py-3 text-right tabular-nums">{p.stock}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex justify-end gap-2">
-                        <button
-                          onClick={() => editar(p)}
-                          className="rounded-md px-2 py-1 text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950"
-                        >
-                          Editar
-                        </button>
-                        <button
-                          onClick={() => borrar(p)}
-                          className="rounded-md px-2 py-1 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950"
-                        >
-                          Eliminar
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        {cargando ? (
+          <p className="py-6 text-center text-sm text-foreground/60">
+            Cargando… (Render gratis puede tardar ~1 min en despertar)
+          </p>
+        ) : visibles.length === 0 ? (
+          <p className="py-6 text-center text-sm text-foreground/60">
+            {productos.length === 0 ? "Aún no hay productos" : "Nada coincide con el filtro"}
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {visibles.map((p) => (
+              <li
+                key={p.id}
+                className={`flex items-center gap-3 rounded-2xl px-3 py-2 ${
+                  editandoId === p.id ? "bg-rana-claro" : "bg-background"
+                }`}
+              >
+                <span className="w-8 text-center text-xs text-foreground/50">#{p.id}</span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium">{p.nombre}</p>
+                  <p className="text-xs text-foreground/60">
+                    {formatoPrecio.format(p.precio)} · {p.stock} en stock
+                  </p>
+                </div>
+                <button
+                  onClick={() => editar(p)}
+                  className="rounded-full px-3 py-1 text-xs text-rana-oscuro hover:bg-rana-claro"
+                >
+                  Editar
+                </button>
+                <button
+                  onClick={() => borrar(p)}
+                  className="rounded-full px-3 py-1 text-xs text-mejilla hover:bg-[#fde6e7]"
+                >
+                  Eliminar
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
+
+      <form onSubmit={buscarPorId} className={`${card} flex flex-col gap-3`}>
+        <div className="flex gap-2">
+          <input
+            className={input}
+            type="number"
+            min="1"
+            step="1"
+            placeholder="Buscar por id"
+            aria-label="Buscar por id"
+            value={buscarId}
+            onChange={(e) => setBuscarId(e.target.value)}
+            required
+          />
+          <button type="submit" className={botonVerde}>
+            Buscar
+          </button>
+        </div>
+        {encontrado && (
+          <p className="rounded-2xl bg-background px-4 py-2 text-sm">
+            <span className="text-foreground/50">#{encontrado.id}</span>{" "}
+            <span className="font-medium">{encontrado.nombre}</span> · {formatoPrecio.format(encontrado.precio)} ·{" "}
+            {encontrado.stock} en stock
+          </p>
+        )}
+      </form>
+
+      <footer className="text-center text-xs text-foreground/50">🐸 hecho con Next.js + Render</footer>
     </div>
   );
 }
